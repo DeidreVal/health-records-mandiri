@@ -6,6 +6,8 @@ import com.mandiri.healthrecords.model.entity.Patient;
 import com.mandiri.healthrecords.model.entity.Record;
 import com.mandiri.healthrecords.model.request.RecordRequestInsertDTO;
 import com.mandiri.healthrecords.model.request.RecordRequestUpdateDTO;
+import com.mandiri.healthrecords.model.response.DrugDetailResponseDTO;
+import com.mandiri.healthrecords.model.response.RecordPaymentResponseDTO;
 import com.mandiri.healthrecords.model.response.RecordResponseDTO;
 import com.mandiri.healthrecords.repository.RecordRepository;
 import com.mandiri.healthrecords.service.RecordService;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -117,12 +120,46 @@ public class RecordServiceImpl implements RecordService {
     }
 
     @Override
-    public void paymentRecord(String id) {
-        String query = "SELECT visit_date, ARRAY_AGG(doctor_id), ARRAY_AGG(drug_id), patient_id FROM patient_record WHERE patient_id = :id GROUP BY patient_id, visit_date";
+    public RecordPaymentResponseDTO paymentRecord(String patientId, LocalDateTime date, String doctorId) {
+//        String query = "SELECT ARRAY_AGG(record_id) AS record_id, visit_date, ARRAY_AGG(diagnosis) as diagnosis, ARRAY_AGG(doctor_id) AS doctor_id, ARRAY_AGG(drug_id) AS drug_id, patient_id FROM patient_record WHERE patient_id = :id GROUP BY patient_id, visit_date";
+        String query = "SELECT * FROM patient_record WHERE patient_id = :id AND visit_date = :date AND doctor_id = :doctorId";
 
         List<Record> record = entityManager.createNativeQuery(query, Record.class)
-                .setParameter("id", id)
+                .setParameter("id", patientId)
+                .setParameter("date", date)
+                .setParameter("doctorId", doctorId)
                 .getResultList();
-        System.out.println(record);
+
+        Patient patient = record.get(0).getPatient();
+        Doctor doctor = record.get(0).getDoctor();
+        Double total = 0.0;
+        total += record.get(0).getDoctor().getRate();
+
+        RecordPaymentResponseDTO recordPaymentResponseDTO = new RecordPaymentResponseDTO();
+        List<DrugDetailResponseDTO> drugDetailResponseDTOList = new ArrayList<>();
+        for (Record rec : record) {
+            Drug drug = recordRepository.findById(rec.getId()).get().getDrug();
+            DrugDetailResponseDTO drugDetailResponseDTO = new DrugDetailResponseDTO();
+            total += drug.getPrice();
+
+            drugDetailResponseDTO.setDrugId(drug.getId());
+            drugDetailResponseDTO.setDrugName(drug.getDrugName());
+            drugDetailResponseDTO.setDrugPrice(drug.getPrice());
+            drugDetailResponseDTOList.add(drugDetailResponseDTO);
+        }
+
+        recordPaymentResponseDTO.setPatientId(patient.getId());
+        recordPaymentResponseDTO.setFirstName(patient.getFirstName());
+        recordPaymentResponseDTO.setLastName(patient.getLastName());
+        recordPaymentResponseDTO.setVisitDate(record.get(0).getVisitDate());
+        recordPaymentResponseDTO.setDiagnosis(record.get(0).getDiagnosis());
+        recordPaymentResponseDTO.setDrug(drugDetailResponseDTOList);
+        recordPaymentResponseDTO.setDoctorId(doctor.getId());
+        recordPaymentResponseDTO.setDoctorFirstName(doctor.getFirstName());
+        recordPaymentResponseDTO.setDoctorLastName(doctor.getLastName());
+        recordPaymentResponseDTO.setDoctorRate(doctor.getRate());
+        recordPaymentResponseDTO.setTotalPayment(total);
+
+        return recordPaymentResponseDTO;
     }
 }

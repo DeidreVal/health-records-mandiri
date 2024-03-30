@@ -4,11 +4,13 @@ import com.mandiri.healthrecords.constant.ApiPathConstant;
 import com.mandiri.healthrecords.model.entity.Record;
 import com.mandiri.healthrecords.model.request.RecordRequestInsertDTO;
 import com.mandiri.healthrecords.model.request.RecordRequestUpdateDTO;
+import com.mandiri.healthrecords.model.response.RecordPaymentResponseDTO;
 import com.mandiri.healthrecords.model.response.RecordResponseDTO;
 import com.mandiri.healthrecords.service.RecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -42,8 +44,8 @@ public class RecordController {
         recordService.deleteRecord(id);
     }
 
-    @GetMapping("/payment/{$id}")
-    public void paymentRecord(@PathVariable String id) {
-        recordService.paymentRecord(id);
+    @GetMapping("/payment/{patientId}/{date}/{doctorId}")
+    public RecordPaymentResponseDTO paymentRecord(@PathVariable String patientId, @PathVariable LocalDateTime date, @PathVariable String doctorId) {
+        return recordService.paymentRecord(patientId, date, doctorId);
     }
 }

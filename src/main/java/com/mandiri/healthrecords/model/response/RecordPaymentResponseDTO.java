@@ -1,8 +1,5 @@
 package com.mandiri.healthrecords.model.response;
 
-import com.mandiri.healthrecords.model.entity.Doctor;
-import com.mandiri.healthrecords.model.entity.Drug;
-import com.mandiri.healthrecords.model.entity.Patient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,8 +17,11 @@ public class RecordPaymentResponseDTO {
     private String firstName;
     private String lastName;
     private LocalDateTime visitDate;
-    private List<String> drugName;
+    private String diagnosis;
+    private List<DrugDetailResponseDTO> drugDetail;
+    private String doctorId;
     private String doctorFirstName;
     private String doctorLastName;
-    private Doctor doctor;
+    private Double doctorRate;
+    private Double TotalPayment;
 }
